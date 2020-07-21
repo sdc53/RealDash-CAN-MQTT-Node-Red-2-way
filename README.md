@@ -17,7 +17,7 @@ Video walkthru and discussion: https://youtu.be/JI3K38Xs5dc
 I have a YouTube channel called "This Old Bus" that I will post additional updates to as this project progresses. https://www.youtube.com/channel/UC0WtcGAtbh6DgBAW5ckFtgQ/featured?view_as=subscriber
 
 ## ESPhome circuit
-I'm using the ESPhome firmware to program my ESP8266 boards.  You can use whatever you want.  If you want to see the circuit I'm using, look for the related project on my github page.
+I'm using the ESPhome firmware to program my ESP8266 boards.  You can use whatever you want.  If you want to see the circuit I'm using, look for the related project on my github page.  https://github.com/sdc53/ESPhome-engine-coolant-and-oil-pressure-sensor
 
 ## Instructions
 This project is driven by 2 files: The Node-red flow, and corresponding RealDash XML file. 
