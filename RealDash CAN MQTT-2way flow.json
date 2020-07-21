@@ -1,0 +1,623 @@
+[
+    {
+        "id": "9f93c9be.8e1a38",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "4ae6f367.29f87c",
+        "type": "tcp in",
+        "z": "9f93c9be.8e1a38",
+        "name": "listen on 35000 ",
+        "server": "server",
+        "host": "192.168.2.110",
+        "port": "35000",
+        "datamode": "stream",
+        "datatype": "buffer",
+        "newline": "",
+        "topic": "",
+        "base64": false,
+        "x": 100,
+        "y": 340,
+        "wires": [
+            [
+                "a428cdd8.edf71"
+            ]
+        ],
+        "outputLabels": [
+            "test"
+        ]
+    },
+    {
+        "id": "a428cdd8.edf71",
+        "type": "binary",
+        "z": "9f93c9be.8e1a38",
+        "name": "parse buffer into json",
+        "property": "payload",
+        "pattern": "b32=>tag,\nl32=>frame, \nl64a=>data,\nb8=>checksum",
+        "x": 320,
+        "y": 340,
+        "wires": [
+            [
+                "614615aa.877d6c"
+            ]
+        ],
+        "info": "Parse packet to json"
+    },
+    {
+        "id": "614615aa.877d6c",
+        "type": "function",
+        "z": "9f93c9be.8e1a38",
+        "name": "verify checksum, save state",
+        "func": "function storedata(frame,data) {\n    var states=flow.get(\"currentstates\");\n    states[frame].data=data;\n    //is this even necessary? eg, does array get saved to obj?\n    flow.set(\"currentstates\", states); \n}\n\n//verify checksum\nchecksum = 0;\nif(msg.original.length == 17 &&  msg.payload.tag == 0x44332211) {\n    count = 0;\n    while(count<16) {\n        checksum = (checksum & (0x000000FF)) + \n            ((0x000000FF) & msg.original[count]);\n        count ++;\n    }\n    if(checksum==msg.payload.checksum) {\n        storedata(msg.payload.frame,msg.payload.data);\n        return msg;\n    }\n    //else return nothing\n} \n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 580,
+        "y": 340,
+        "wires": [
+            [
+                "8a68c368.7c0bd"
+            ]
+        ]
+    },
+    {
+        "id": "27af5b59.d23784",
+        "type": "tcp out",
+        "z": "9f93c9be.8e1a38",
+        "host": "",
+        "port": "",
+        "beserver": "reply",
+        "base64": false,
+        "end": false,
+        "name": "send to realdash",
+        "x": 1120,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "5b5e7671.d4d568",
+        "type": "inject",
+        "z": "9f93c9be.8e1a38",
+        "name": "",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "1",
+        "crontab": "",
+        "once": true,
+        "onceDelay": ".5",
+        "x": 110,
+        "y": 500,
+        "wires": [
+            [
+                "afc42a4.b179ad8"
+            ]
+        ]
+    },
+    {
+        "id": "9dfe6eb.540b69",
+        "type": "comment",
+        "z": "9f93c9be.8e1a38",
+        "name": "Initialize flow globals",
+        "info": "",
+        "x": 110,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "c61e9f29.782f4",
+        "type": "inject",
+        "z": "9f93c9be.8e1a38",
+        "name": "",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "0",
+        "x": 110,
+        "y": 80,
+        "wires": [
+            [
+                "3284a448.c142ac"
+            ]
+        ]
+    },
+    {
+        "id": "3284a448.c142ac",
+        "type": "function",
+        "z": "9f93c9be.8e1a38",
+        "name": "init tags",
+        "func": "flow.set('defaulttag',0x44332211);\nflow.set('texttag', 0x55332211); \nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 320,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "afc42a4.b179ad8",
+        "type": "function",
+        "z": "9f93c9be.8e1a38",
+        "name": "format all frames",
+        "func": "var states=flow.get(\"currentstates\");\nvar result = []; \nfor (var p in states) {\n    if(!('data' in states[p])) {//if data element does not exist yet\n        //add it\n        states[p].data=Buffer.alloc(8, 0);\n    }\n    result.push({payload: {tag: flow.get('defaulttag'),\n        frame: states[p].frame, \n        type: states[p].type, \n        value:states[p].value,\n        data: states[p].data\n    }}); \n  \n}\nreturn[result];\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 310,
+        "y": 500,
+        "wires": [
+            [
+                "d690476b.befb98"
+            ]
+        ]
+    },
+    {
+        "id": "d690476b.befb98",
+        "type": "binary",
+        "z": "9f93c9be.8e1a38",
+        "name": "parse json to buffer",
+        "property": "payload",
+        "pattern": "b32=>tag,\nl32=>frame, \nl64a=>data",
+        "x": 1090,
+        "y": 460,
+        "wires": [
+            [
+                "27af5b59.d23784"
+            ]
+        ],
+        "info": "Parse packet to json"
+    },
+    {
+        "id": "8a68c368.7c0bd",
+        "type": "function",
+        "z": "9f93c9be.8e1a38",
+        "name": "format output data",
+        "func": "  var states=flow.get(\"currentstates\");\n  var currentdata=states[msg.payload.frame].data; \n  var obj={\n      tag: flow.get('defaulttag'),\n      frame: msg.payload.frame,\n      data: currentdata\n  }\n  //search thru values for a topic, if found generate messages for it\n  var msg2=searchTopics(states[msg.payload.frame]);\n  msg.payload=obj; //first arguments to return\n  return [msg, msg2];\n\n\n//checks to see if topics exist in the values of the passed-in data that we are supposed to publish to\n//returns formatted message with topic and value for MQTT\nfunction searchTopics(stateobj) {\n    var msg=[]\n\n    for (count = 0; count < stateobj.values.length; count++) { //loop thru possible values in each frame\n        val = stateobj.values[count]; //should contain a value object\n\t\tif('pub' in val) { //we need to send data to anything found here\n\t\t    var rval=extractData(val, stateobj.data);\n\t\t    if(rval!==false){\n\t\t        msg.push({topic: val.pub, payload:rval});  \n\t\t    }\n\t\t}\n    }\n    \n    return msg;\n}\n\n//looks through value object to determine the position of data\n//extracts the data from binary\n//arguments: individual value object, data array or buffer\n//returns: value extracted from data array\n//old function updateData(value, newdata, existarr) {\nfunction extractData(value, data) {\n    var rval=false;\n    if ('offset' in value) { //handle byte data type\n        var len = parseInt(value['length'], 10);\n        var offset = parseInt(value['offset'], 10);\n        var newarr = data.slice(offset,offset+len);//create a new array of the appropriate length\n        rval = array2number(newarr); //convert to an integer\n    } else if ('startbit' in value) { //binary value\n        var len = parseInt(value['bitcount'], 10);\n        var offset = parseInt(value['startbit'], 10);\n\t\t//figure out byte position\n\t\t//offset is in bits\n\t\tvar bytepos=Math.floor(offset/8);\n\t\tvar bitpos=offset-(bytepos*8);//calculate bit position in nth byte\n\t\t//extract target byte, assumes target bits are all contained within same byte\n\t\tvar targetbyte=data[bytepos];\n\t\tvar targetbits=targetbyte.toString(2);//convert to base-2 string\n\t\ttargetbits=(\"00000000\" + targetbits).slice(-8) //zero-pad it\n\t\ttargetbits=targetbits.split(\"\").reverse();//convert to array\n\t\trval=0;\n\t\tfor(var count=0; count<len; count++) {\n\t\t\trval=rval+(targetbits[bitpos+count]<<count);\n\t\t}\n    }\n    return rval;\n}\n\nfunction array2number(num2convert) {\n    rval=0;\n    for (index = num2convert.length-1; index>=0; index--) { //little endian stores smaller value in lower byte first\n        byte=num2convert[index];\n        rval=rval+(byte << (index * 8));\n        num2convert = (num2convert - byte) / 256;\n    }\n\n    return rval;\n}\n",
+        "outputs": 2,
+        "noerr": 0,
+        "x": 830,
+        "y": 340,
+        "wires": [
+            [
+                "d690476b.befb98"
+            ],
+            [
+                "985ad434.f610c8"
+            ]
+        ]
+    },
+    {
+        "id": "af05f1fa.98799",
+        "type": "xml",
+        "z": "9f93c9be.8e1a38",
+        "name": "",
+        "property": "payload",
+        "attr": "",
+        "chr": "",
+        "x": 330,
+        "y": 180,
+        "wires": [
+            [
+                "cb8e8286.5f861"
+            ]
+        ]
+    },
+    {
+        "id": "7e159e7.b67656",
+        "type": "inject",
+        "z": "9f93c9be.8e1a38",
+        "name": "realdash can xml",
+        "topic": "",
+        "payload": "<?xml version=\"1.0\" encoding=\"utf-8\"?> <!-- RealDash CAN XML description file, version 2 Requires RealDash version 1.5.8 or newer --> <RealDashCAN version=\"2\">   <!-- baseId [optional] is added to each frame canId. -->   <!-- frames baseId=\"3200\" -->   <frames>     <!-- PARAMETERS FOR 'frame' -->     <!-- 'id' can identifier (= baseId + id). Use 0x prefix to enter id as hexadesimal value. For example <frame id=\"3200\"> is equal to <frame id=\"0x0c80\"> -->     <!-- 'writeInterval' [optional] this CAN frame is written to CAN bus in this interval (milliseconds) -->     <!-- 'endianess' [optional] the endianess of all frame values (big | little [default]).  -->     <!-- 'signed' [optional, from 1.7.4] set to true to force RealDash to handle all values in frame as signed values.  -->     <frame id=\"3200\">       <!-- PARAMETERS FOR 'value' -->       <!-- 'targetId' links value to RealDash input, see RealDash manuals www for a complete list -->       <!-- OR -->       <!-- 'name' links value to RealDash input, input appears in 'ECU Specific' input category -->        <!-- 'units' [optional] is used for post calculations, \"F\", \"mph\", \"psi\", \"bit\" which need to be specified for dashboard conversions to work properly -->       <!-- 'offset' byte offset of the value in frame -->       <!-- 'length' value length in bytes -->       <!-- 'startbit' [optional] the index of the first bit of the value -->       <!-- 'bitcount' [optional] number of bits used by the value -->       <!-- 'endianess' \"big\" -->       <!-- 'signed' [optional, from 1.7.4] set to true to force RealDash to handle this value as signed.  -->       <!-- 'rangeMin' and 'rangeMax' [optional] if 'name' is used instead of 'targetId', this is the recommended value range in RealDash editor -->       <!-- 'initialValue' [optional] if this parameter is present, value is written to CAN after connection has been made to the CAN bus -->       <!-- 'conversion' [optional] if omitted, value is read 'as-is'.            Otherwise variables 'B0', 'B1', 'B2', 'B3', 'V' and 'ID#' can be used within conversion formula, for example;            conversion=\"V/10\" - result is incoming value / 10            conversion=\"B0+15*(B1-43)\" - result is 'first byte + 15 * (second byte - 43)            conversion=\"V+ID200-74.3\" - result is incoming value + 'Body Electronics->Gear' - 74.3 -->       <!-- From RealDash version 1.6.6, 'conversionABC' is an option to 'conversion' and uses A,B,C,...AA,AB,AC,...,etc format to distinquish the individual bytes on the reply.            This makes it easier to convert the Equation from other apps.            Example: conversion=\"B0+15*(B1-43)\" and conversionABC=\"A+15*(B-43)\" produce the same result --> \t  <!-- sub=\"MQTT topic to subscribe to\"--> \t  <!-- pub=\"MQTT topic to publish to\"--> \t  <!-- submult=\"Multiplier that node-red will apply to the raw value before transmitting. Useful for having a decimal value\" -->       <!-- 1st CAN frame, RPM, MAP, CLT, TPS -->       <value targetId=\"37\" units=\"RPM\" offset=\"0\" conversion=\"V*10\" length=\"2\" initialValue=\"37\" sub=\"wled/couch/g\"></value>       <value targetId=\"31\" units=\"kPA\" offset=\"2\" length=\"2\" conversion=\"V/10\" initialValue=\"31\" sub=\"wled/couch/g\"></value>       <value targetId=\"14\" units=\"C\" offset=\"4\" length=\"2\" initialValue=\"14\" conversion=\"V/10\" sub=\"engine1/sensor/coolant_temperature/state\" submult=\"10\"></value>       <value targetId=\"151\" units=\"PSI\" offset=\"6\" length=\"2\" conversion=\"V/10\" sub=\"engine1/sensor/oil_pressure/state\" submult=\"10\"></value>     </frame>            <frame id=\"3201\">       <!-- 2nd CAN frame, Arduino example digital inputs, these will appear in RealDash 'ECU Specific' input category -->       <!-- note that 9 bit values all come from same 2 bytes -->       <!-- if units=\"bit\", RealDash always checks the lowest bit as of value on or off. Therefore the bitshift to the right on conversion -->       <value name=\"Arduino Example: Digital 1\" startbit=\"0\" bitcount=\"1\" initialValue=\"1\" pub=\"engine1/switch/relay/command\" sub=\"engine1/switch/relay/state\"></value>       <value name=\"Arduino Example: Digital 2\" startbit=\"1\" bitcount=\"1\"></value>       <value name=\"Arduino Example: Digital 3\" startbit=\"2\" bitcount=\"1\"></value>       <value name=\"Arduino Example: Digital 4\" startbit=\"3\" bitcount=\"1\"></value>       <value name=\"Arduino Example: Digital 5\" startbit=\"4\" bitcount=\"1\"></value>       <value name=\"Arduino Example: Digital 6\" startbit=\"5\" bitcount=\"1\"></value>       <value name=\"Arduino Example: Digital 7\" startbit=\"6\" bitcount=\"1\"></value>       <value name=\"Arduino Example: Digital 8\" startbit=\"7\" bitcount=\"1\"></value>       <value name=\"Arduino Example: Digital 9\" startbit=\"8\" bitcount=\"1\"></value>       <value name=\"Arduino Example: Digital 10\" startbit=\"9\" bitcount=\"1\"></value>       <value name=\"Arduino Example: Digital 11\" startbit=\"10\" bitcount=\"1\" initialValue=\"1\" pub=\"wled/couch\" sub=\"wled/couch/g\"></value>       <value name=\"Arduino Example: Digital 12\" startbit=\"11\" bitcount=\"1\"></value>       <value name=\"Arduino Example: Digital 13\" startbit=\"12\" bitcount=\"1\" sub=\"engine1/status\"></value>     </frame>      <!-- 3rd CAN frame contains rest of Arduino analog inputs -->     <frame id=\"3202\" type=\"analog\">       <value name=\"Arduino Example: Analog 4\" offset=\"0\" length=\"2\" initialValue=\"4\"></value>       <value name=\"Arduino Example: Analog 5\" offset=\"2\" length=\"2\" initialValue=\"5\"></value>       <value name=\"Arduino Example: Analog 6\" offset=\"4\" length=\"2\" initialValue=\"6\"></value>       <value name=\"Arduino Example: Analog 7\" offset=\"6\" length=\"2\" initialValue=\"7\"></value>     </frame>      <frame id=\"3203\" type=\"text\">       <!-- 4th CAN frame, example of text extension frame -->       <!-- Text extension frame requires RealDash 1.4.1 or newer -->       <!-- declare own unique CAN id for each text value. -->       <!-- the text extension frame always consumes entire CAN id, multiple text strings cannot be added to one frame. -->        <!-- units must be set to \"text\" -->       <!-- offset, length and conversion values have no meaning with text data -->       <value name=\"Arduino Example: Text 1\" units=\"text\" initialValue=\"foo\"></value>     </frame>    </frames> </RealDashCAN>",
+        "payloadType": "str",
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "0",
+        "x": 130,
+        "y": 180,
+        "wires": [
+            [
+                "af05f1fa.98799"
+            ]
+        ]
+    },
+    {
+        "id": "cb8e8286.5f861",
+        "type": "change",
+        "z": "9f93c9be.8e1a38",
+        "name": "parse jsonata",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.RealDashCAN.frames.frame{\t$string('$'.id) : {\t'frame' : $string('$'.id),\t'type'  : '$'.type,\t'values' : value.'$'[]\t} }",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "foo",
+                "pt": "msg",
+                "to": "*.($frame := frame; $val:=value; $typ:=type;{\t'frame':$frame,\t'type':$typ,\t'val':$val[topic='wled/couch/g']\t}\t)",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 520,
+        "y": 180,
+        "wires": [
+            [
+                "4de45de8.f9cc54"
+            ]
+        ]
+    },
+    {
+        "id": "e84fb463.f29b68",
+        "type": "comment",
+        "z": "9f93c9be.8e1a38",
+        "name": "Initialize xml->json data structure",
+        "info": "",
+        "x": 150,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "448d56f.56aeda8",
+        "type": "comment",
+        "z": "9f93c9be.8e1a38",
+        "name": "listen for realdash, store and act on data, respond",
+        "info": "",
+        "x": 200,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "d755db79.1615e8",
+        "type": "comment",
+        "z": "9f93c9be.8e1a38",
+        "name": "keepalive: send data to realdash every 4 s",
+        "info": "",
+        "x": 180,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "eef61e9a.4a87d",
+        "type": "mqtt in",
+        "z": "9f93c9be.8e1a38",
+        "name": "",
+        "topic": "wled/couch/#",
+        "qos": "0",
+        "datatype": "auto",
+        "broker": "d3868a13.098648",
+        "x": 90,
+        "y": 640,
+        "wires": [
+            [
+                "1dd5c5b4.dfbe7a"
+            ]
+        ]
+    },
+    {
+        "id": "9ac78940.822958",
+        "type": "change",
+        "z": "9f93c9be.8e1a38",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "currentstates",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 940,
+        "y": 180,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "18764674.07517a",
+        "type": "comment",
+        "z": "9f93c9be.8e1a38",
+        "name": "listen for MQTT topics and update realdash",
+        "info": "",
+        "x": 180,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "682471bf.2051a",
+        "type": "comment",
+        "z": "9f93c9be.8e1a38",
+        "name": "output data",
+        "info": "",
+        "x": 1060,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "5b72afad.f661d",
+        "type": "mqtt out",
+        "z": "9f93c9be.8e1a38",
+        "name": "",
+        "topic": "",
+        "qos": "0",
+        "retain": "",
+        "broker": "d3868a13.098648",
+        "x": 690,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "985ad434.f610c8",
+        "type": "change",
+        "z": "9f93c9be.8e1a38",
+        "name": "convert 1/0 to ON/OFF",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "1",
+                "fromt": "num",
+                "to": "ON",
+                "tot": "str"
+            },
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "0",
+                "fromt": "num",
+                "to": "OFF",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 480,
+        "y": 400,
+        "wires": [
+            [
+                "5b72afad.f661d"
+            ]
+        ]
+    },
+    {
+        "id": "c3ee8f87.5776f",
+        "type": "mqtt in",
+        "z": "9f93c9be.8e1a38",
+        "name": "",
+        "topic": "wled/kitchen/#",
+        "qos": "0",
+        "datatype": "auto",
+        "broker": "d3868a13.098648",
+        "x": 90,
+        "y": 700,
+        "wires": [
+            [
+                "1dd5c5b4.dfbe7a"
+            ]
+        ]
+    },
+    {
+        "id": "e4724f01.00d69",
+        "type": "mqtt in",
+        "z": "9f93c9be.8e1a38",
+        "name": "",
+        "topic": "engine1/sensor/coolant_temperature/state",
+        "qos": "0",
+        "datatype": "auto",
+        "broker": "d3868a13.098648",
+        "x": 180,
+        "y": 760,
+        "wires": [
+            [
+                "1dd5c5b4.dfbe7a"
+            ]
+        ]
+    },
+    {
+        "id": "3de5ad3b.0d73a2",
+        "type": "mqtt in",
+        "z": "9f93c9be.8e1a38",
+        "name": "",
+        "topic": "engine1/status",
+        "qos": "1",
+        "datatype": "auto",
+        "broker": "d3868a13.098648",
+        "x": 100,
+        "y": 1000,
+        "wires": [
+            [
+                "b297500f.71bb3"
+            ]
+        ]
+    },
+    {
+        "id": "b297500f.71bb3",
+        "type": "change",
+        "z": "9f93c9be.8e1a38",
+        "name": "",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "online",
+                "fromt": "str",
+                "to": "1",
+                "tot": "num"
+            },
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "offline",
+                "fromt": "str",
+                "to": "0",
+                "tot": "num"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 320,
+        "y": 1000,
+        "wires": [
+            [
+                "275801a2.3d688e",
+                "7b33224d.e3047c",
+                "1dd5c5b4.dfbe7a"
+            ]
+        ]
+    },
+    {
+        "id": "275801a2.3d688e",
+        "type": "mqtt out",
+        "z": "9f93c9be.8e1a38",
+        "name": "",
+        "topic": "engine1/sensor/coolant_temperature/state",
+        "qos": "",
+        "retain": "false",
+        "broker": "d3868a13.098648",
+        "x": 600,
+        "y": 1000,
+        "wires": []
+    },
+    {
+        "id": "efd24961.4f6d08",
+        "type": "mqtt in",
+        "z": "9f93c9be.8e1a38",
+        "name": "",
+        "topic": "engine1/sensor/oil_pressure/state",
+        "qos": "0",
+        "datatype": "auto",
+        "broker": "d3868a13.098648",
+        "x": 150,
+        "y": 820,
+        "wires": [
+            [
+                "1dd5c5b4.dfbe7a"
+            ]
+        ]
+    },
+    {
+        "id": "7b33224d.e3047c",
+        "type": "mqtt out",
+        "z": "9f93c9be.8e1a38",
+        "name": "",
+        "topic": "engine1/sensor/oil_pressure/state",
+        "qos": "",
+        "retain": "false",
+        "broker": "d3868a13.098648",
+        "x": 580,
+        "y": 1060,
+        "wires": []
+    },
+    {
+        "id": "60ee56d5.27caf8",
+        "type": "comment",
+        "z": "9f93c9be.8e1a38",
+        "name": "if sensor goes offline, set mqtt values to 0",
+        "info": "",
+        "x": 180,
+        "y": 960,
+        "wires": []
+    },
+    {
+        "id": "c6ea17ba.b5d4a8",
+        "type": "mqtt in",
+        "z": "9f93c9be.8e1a38",
+        "name": "",
+        "topic": "engine1/switch/relay/state",
+        "qos": "0",
+        "datatype": "auto",
+        "broker": "d3868a13.098648",
+        "x": 130,
+        "y": 880,
+        "wires": [
+            [
+                "1dd5c5b4.dfbe7a"
+            ]
+        ]
+    },
+    {
+        "id": "4de45de8.f9cc54",
+        "type": "function",
+        "z": "9f93c9be.8e1a38",
+        "name": "init data buffers",
+        "func": "for (var p in msg.payload) { //one for each frame type\n    if (!('data' in msg.payload[p])) { //if data element does not exist yet\n        //add it\n        msg.payload[p].data = Buffer.alloc(8, 0);\n    }\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 720,
+        "y": 180,
+        "wires": [
+            [
+                "9ac78940.822958"
+            ]
+        ]
+    },
+    {
+        "id": "1dd5c5b4.dfbe7a",
+        "type": "function",
+        "z": "9f93c9be.8e1a38",
+        "name": "find topic in states obj and update data",
+        "func": "var states = flow.get(\"currentstates\");\nvar topicpayload = msg.payload; //probably a string\nif (typeof(topicpayload) == 'string') { //if so, convert\n    //check for common topic strings\n    if(topicpayload=='ON') {\n        topicpayload=\"1\";\n    } else if (topicpayload==\"OFF\") {\n        topicpayload=\"0\";\n    }\n    //convert to float\n    topicpayload = parseFloat(topicpayload, 10);\n}\nvar result = [];\nfor (var p in states) { //one for each frame type\n    dirtyframe=false;\n    for (count = 0; count < states[p].values.length; count++) { //loop thru possible values in each frame\n        val = states[p].values[count]; //should contain object\n\t\tif('sub' in val && 'topic' in msg) {\n\t\t\tif ('sub' in val && val.sub == msg.topic) { //look for matching topic in value\n\t\t\t\t//if we found a matching topic\n\t\t\t\t//replace value in data array with value from topic\n\t\t\t\tupdateData(val, topicpayload, states[p].data);\n\t\t\t\tdirtyframe=true;\n\t\t\t\t/*\n\n\t\t\t\t*/\n\t\t\t}\n\t\t}\n    }\n    if(dirtyframe) {\n        result.push({payload: {\n            tag: flow.get('defaulttag'),\n            frame: states[p].frame,\n            type: states[p].type,\n            data: states[p].data\n        }});\n\t}\n}\nif (result.length>0) {\n    return [result];\n} //else we return nothing and stop messages\n\n//interprets values in realdash json structure to determine where data needs to get inserted\n//arguments: value object, newdata to update, existing data array\n//returns: true or false, existing array gets updated\nfunction updateData(value, newdata, existarr) {\n\n    if ('offset' in value) { //handle byte data type\n        var len = parseInt(value['length'], 10);\n        var offset = parseInt(value['offset'], 10);\n        if('submult' in value) {//look for special multiplier\n            var multiplier=parseInt(value['submult'],10);\n            newdata=newdata*multiplier;\n        }\n        var atom = uint2byteArray(newdata, len); //get an array of the appropriate number of bytes\n        //Array.prototype.splice.apply(existarr, [offset, atom.length].concat(atom));\n\t\tatom.copy(existarr, offset);//atom is source, existarr is target.  copy new value to existing array\n        return true;\n    } else if ('startbit' in value) { //binary value\n        var len = parseInt(value['bitcount'], 10);\n        var offset = parseInt(value['startbit'], 10);\n\t\t//check size of newdata, if bigger than converted type will hold, reduce it\n\t\tif(newdata > 2**(len-1)) {\n\t\t    newdata=2**(len-1);\n\t\t}\n\t\tvar atom=newdata.toString(2); //convert integer to binary string representation\n\t\tatom=(\"00008888\" + atom).slice(len*-1);//truncate binary representation to expected length\n\t\tatom=atom.split(\"\").reverse();//convert to array\n\t\t//existarr is in bytes, need to figure out position\n\t\t//offset is in bits\n\t\tvar bytepos=Math.floor(offset/8);\n\t\tvar bitpos=offset-(bytepos*8);//calculate bit position in nth byte\n\t\t//extract target byte\n\t\tvar targetbyte=existarr[bytepos];\n\t\tvar targetbits=targetbyte.toString(2);\n\t\ttargetbits=(\"00000000\" + targetbits).slice(-8)\n\t\ttargetbits=targetbits.split(\"\").reverse();//convert to array\n\t\tfor(var count=0; count<len; count++) {\n\t\t\ttargetbits[bitpos+count]=atom[count];\n\t\t}\n\t\ttargetbits=targetbits.reverse();//convert back to normal order\n\t\ttargetbits=targetbits.join('');//convert to string\n\t\ttargetbyte=parseInt(targetbits,2);\n\t\texistarr[bytepos]=targetbyte;//save back into orig array in the proper position\n\t\treturn true;\n    }\n    return false;\n}\n\nfunction uint2byteArray(num2convert, len) {\n    // make an empty buffer of the appropriate size\n    var byteArray = Buffer.alloc(len);\n    //populate it\n    for (var index = 0; index < len; index++) { //little endian stores smaller value in lower byte first\n        var byte = num2convert & 0xff;\n        byteArray[index] = byte;\n        num2convert = (num2convert - byte) / 256;\n    }\n\n    return byteArray;\n}\n",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 570,
+        "y": 740,
+        "wires": [
+            [
+                "d690476b.befb98"
+            ]
+        ]
+    },
+    {
+        "id": "d3868a13.098648",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "rpi4",
+        "broker": "192.168.2.200",
+        "port": "1883",
+        "clientid": "nodered",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    }
+]
