@@ -35,7 +35,7 @@ The job of the code is basically to send and receive data, figure out where in t
 0.  This is a work in progress.  The files are setup for my environment and testing. You'll need to do some work to configure it for yours.  For example, the supplied dashboard has triggers in it for my coolant, oil pressure, and other warnings I saw fit to add.
 1.  All ID's within a realdash frame should be the same data type (eg, bit or byte).
 2.  Currently, only byte and bit data types are supported.  I will add Text when I have a need for it.
-3.  Little-endian is the only data type supported.
+3.  Little-endian is the only byte order supported.
 4.  I've tested the code with up to 2-byte ID's and single bit values, although theoretically more should work.
 5.  If you send bigger data than the realdash ID is configured for, it'll get truncated.
 6.  Designed to send integers to realdash.  If you need decimals, use the "submult" key to cause the code to multiply by 10 or 100, and tell realdash to divide using the "conversion" key.  This trick will let you get decimal values.
