@@ -4,23 +4,24 @@ A Node-Red flow to convert data between RealDash CAN format and MQTT
 ## Why did I create this?
 I was looking for a way to use cheap, readily available ESP8266 boards and firmware to transmit engine sensor data to RealDash.  I own an antique vehicle that does not have OBD-II or an ECU to plug into.  This is one way to solve the problem of getting sensor data from a classic car engine into a modern digital dashboard.
 
-Since all of the available open-source firmware for ESP8266 seems to understand MQTT, I chose to write a translator using Node-Red.
+Since all of the available open-source firmware for ESP8266 seems to understand MQTT, I chose to write a translator using Node-Red.  This method is easier than writing and maintaining Arduino code to communicate with RealDash, because it only involves editing an XML configuration file and visually editing Node-red nodes. 
 
 ## 2-way support
 This Node-red flow is 2-way meaning that it supports transmitting information back to MQTT to control relays, lights, etc.
 
 ## My use case
-I own a 1962 GM 4106 bus conversion (eg, converted to an RV) powered by a Detroit Diesel 6v96TA engine.  I want engine and other sensor data available to me on my dash.  I want to add sensors without needing to run additional wires and install expensive gauges.  I need to be able to control certain "house systems" from my dash, eg lights and HVAC.  This solution should allow me to expand the system over time as I upgrade certain aspects of my bus.  I can send a signal from a RealDash switch to turn on MQTT-controlled lights or relays.  I can display information from any MQTT sensor on RealDash.
+I own a 1962 GM 4106 bus conversion (eg, converted to an RV) powered by a Detroit Diesel 6v96TA engine.  I want engine and other sensor data available to me on my dash.  I want to add sensors without needing to run additional wires and install expensive gauges.  I need to be able to control certain "house systems" from my dash, eg lights and HVAC.  This solution should allow me to expand the system over time as I upgrade certain aspects of my bus.  I can send a signal from a RealDash switch to turn on MQTT-controlled lights or relays.  I can display information from any MQTT sensor on RealDash.  I'm using home assistant for the RV house systems, but that isn't required for this project to function.
 
 ## YouTube videos and demo
 Video walkthru and discussion: https://youtu.be/JI3K38Xs5dc
 I have a YouTube channel called "This Old Bus" that I will post additional updates to as this project progresses. https://www.youtube.com/channel/UC0WtcGAtbh6DgBAW5ckFtgQ/featured?view_as=subscriber
 
 ## ESPhome circuit
-I'm using the ESPhome firmware to program my ESP8266 boards.  You can use whatever you want.  If you want to see the circuit I'm using, look for the related project on my github page.
+I'm using the ESPhome firmware to program my ESP8266 boards.  You can use whatever you want.  If you want to see the circuit I'm using, look for the related project on my github page.  https://github.com/sdc53/ESPhome-engine-coolant-and-oil-pressure-sensor
 
 ## Instructions
 This project is driven by 2 files: The Node-red flow, and corresponding RealDash XML file. 
+0.  These instructions assume you've already got MQTT and Node-red installed on a Raspberry Pi or something. If you don't, installing Home Assistant and the Node-red and MQTT add-ons is probably going to be the easiest way to get started, and there is plenty of info available online how to do that. I also assume you're familiar with RealDash and have studied some of the examples they publish on how to use it with Arduino. 
 1.  Import the flow json file into Node-Red.  Configure it to talk to your MQTT broker.
 ![Image of flow](https://github.com/sdc53/RealDash-CAN-MQTT-Node-Red-2-way/raw/master/node-red%20flow%20screenshot.PNG)
 2.  Load the Example dashboard into RealDash.
