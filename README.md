@@ -13,7 +13,8 @@ This Node-red flow is 2-way meaning that it supports transmitting information ba
 I own a 1962 GM 4106 bus conversion (eg, converted to an RV) powered by a Detroit Diesel 6v96TA engine.  I want engine and other sensor data available to me on my dash.  I want to add sensors without needing to run additional wires and install expensive gauges.  I need to be able to control certain "house systems" from my dash, eg lights and HVAC.  This solution should allow me to expand the system over time as I upgrade certain aspects of my bus.  I can send a signal from a RealDash switch to turn on MQTT-controlled lights or relays.  I can display information from any MQTT sensor on RealDash.  I'm using home assistant for the RV house systems, but that isn't required for this project to function.
 
 ## YouTube videos and demo
-Video walkthru and discussion: https://youtu.be/JI3K38Xs5dc
+YouTube project overview: https://youtu.be/UH3q9yckc6g
+YouTube Technical software overview: https://youtu.be/JI3K38Xs5dc
 I have a YouTube channel called "This Old Bus" that I will post additional updates to as this project progresses. https://www.youtube.com/channel/UC0WtcGAtbh6DgBAW5ckFtgQ/featured?view_as=subscriber
 
 ## ESPhome circuit
