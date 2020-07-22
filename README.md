@@ -14,7 +14,9 @@ I own a 1962 GM 4106 bus conversion (eg, converted to an RV) powered by a Detroi
 
 ## YouTube videos and demo
 YouTube project overview: https://youtu.be/UH3q9yckc6g
+
 YouTube Technical software overview: https://youtu.be/JI3K38Xs5dc
+
 I have a YouTube channel called "This Old Bus" that I will post additional updates to as this project progresses. https://www.youtube.com/channel/UC0WtcGAtbh6DgBAW5ckFtgQ/featured?view_as=subscriber
 
 ## ESPhome circuit
@@ -22,6 +24,7 @@ I'm using the ESPhome firmware to program my ESP8266 boards.  You can use whatev
 
 ## Instructions
 This project is driven by 2 files: The Node-red flow, and corresponding RealDash XML file. 
+
 0.  These instructions assume you've already got MQTT and Node-red installed on a Raspberry Pi or something. If you don't, installing Home Assistant and the Node-red and MQTT add-ons is probably going to be the easiest way to get started, and there is plenty of info available online how to do that. I also assume you're familiar with RealDash and have studied some of the examples they publish on how to use it with Arduino. 
 1.  Import the flow json file into Node-Red.  Configure it to talk to your MQTT broker.
 ![Image of flow](https://github.com/sdc53/RealDash-CAN-MQTT-Node-Red-2-way/raw/master/node-red%20flow%20screenshot.PNG)
